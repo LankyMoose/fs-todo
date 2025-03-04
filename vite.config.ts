@@ -2,7 +2,12 @@ import path from "node:path"
 import { defineConfig } from "vite"
 import vike from "vike/plugin"
 import kaioken from "vite-plugin-kaioken"
+import * as vcf from "vike-cloudflare"
 import devServer from "@hono/vite-dev-server"
+
+const { pages } = vcf as {
+  pages: Function
+}
 
 export default defineConfig({
   resolve: {
@@ -25,6 +30,12 @@ export default defineConfig({
         /^\/node_modules\/.*/,
       ],
       injectClientScript: false,
+    }),
+    pages({
+      server: {
+        kind: "hono", // or "hattip"
+        entry: "./src/server.ts", // entrypoint of the server
+      },
     }),
   ],
 })
