@@ -24,15 +24,11 @@ if (isProduction) {
   )
 }
 
-const isString = (value: unknown): value is string => {
-  return typeof value === "string"
-}
-
 app.post("/api/todos", async (c) => {
   console.log(`app.post("/api/todos")`)
   const body = await c.req.parseBody()
   const text = body.text
-  if (!isString(text)) {
+  if (typeof text !== "string" || !text.length) {
     throw new HTTPException(400, { message: "invalid payload" })
   }
   db.todos.add({ id: crypto.randomUUID(), text })
