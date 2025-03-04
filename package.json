@@ -1,0 +1,29 @@
+{
+  "name": "kaioken-vike-template",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx ./src/server.ts",
+    "build": "vite build",
+    "preview": "set NODE_ENV=production&& tsx ./src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "prettier": "^3.4.1",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.7.2",
+    "vite-plugin-kaioken": "0.15.0"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "kaioken": "0.35.10",
+    "tsx": "^4.19.2",
+    "vike": "^0.4.206",
+    "vite": "^6.0.1"
+  }
+}
