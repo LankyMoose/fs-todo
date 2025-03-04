@@ -1,68 +1,70 @@
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-import express from "express"
-import { renderPage, createDevMiddleware } from "vike/server"
+import { Hono } from "hono"
+import { serve } from "@hono/node-server"
+import { renderPage } from "vike/server"
+import { serveStatic } from "@hono/node-server/serve-static"
+import { compress } from "hono/compress"
+import { HTTPException } from "hono/http-exception"
+
 import { db } from "./db"
-import { IncomingMessage } from "node:http"
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 const isProduction = process.env.NODE_ENV === "production"
-const root = resolve(__dirname, "..")
+const port = Number(process.env.PORT) || 3000
 
-startServer()
+const app = new Hono()
+app.use(compress())
+console.log("init new hono app")
 
-async function startServer() {
-  const app = express()
+if (isProduction) {
+  console.log("is prod, serving static")
+  app.use(
+    "/*",
+    serveStatic({
+      root: `./dist/client/`,
+    })
+  )
+}
 
-  if (isProduction) {
-    app.use(express.static(`${root}/dist/client`))
-  } else {
-    // Instantiate Vite's development server and integrate its middleware to our server.
-    // ⚠️ We should instantiate it *only* in development. (It isn't needed in production
-    // and would unnecessarily bloat our server in production.)
-    const { devMiddleware } = await createDevMiddleware({ root })
-    app.use(devMiddleware)
+const isString = (value: unknown): value is string => {
+  return typeof value === "string"
+}
+
+app.post("/api/todos", async (c) => {
+  console.log(`app.post("/api/todos")`)
+  const body = await c.req.parseBody()
+  const text = body.text
+  if (!isString(text)) {
+    throw new HTTPException(400, { message: "invalid payload" })
   }
+  db.todos.add({ id: crypto.randomUUID(), text })
 
-  app.post("/api/todos", async (req, res) => {
-    const asIncomingMsg = req as IncomingMessage
-    let data = ""
-    for await (const chunk of asIncomingMsg) {
-      data += chunk
-    }
-    try {
-      const parsed = JSON.parse(data) as { text: string }
-      if (!("text" in parsed) || typeof parsed.text !== "string")
-        throw new Error("invalid payload")
-      db.todos.add({ id: crypto.randomUUID(), text: parsed.text })
-      console.log("added todo", db.todos)
-    } catch (error) {
-      res.status(400).end()
-    }
-    res.status(200).end()
-  })
+  c.status(201)
 
-  /**
-   * Vike route
-   *
-   * @link {@see https://vike.dev}
-   **/
-  app.all("*", async (req, res, next) => {
-    const pageContextInit = { urlOriginal: req.originalUrl }
-    const pageContext = await renderPage(pageContextInit)
-    const { httpResponse } = pageContext
-    if (httpResponse === null) return next()
+  return c.text("ligma")
+})
 
-    const { body, statusCode, headers, earlyHints } = httpResponse
-    if (res.writeEarlyHints)
-      res.writeEarlyHints({ link: earlyHints.map((e) => e.earlyHintLink) })
-    res.status(statusCode)
-    headers.forEach(([name, value]) => res.setHeader(name, value))
-    res.send(body)
-  })
+app.get("*", async (c, next) => {
+  const pageContextInit = {
+    urlOriginal: c.req.url,
+  }
+  const pageContext = await renderPage(pageContextInit)
+  const { httpResponse } = pageContext
+  if (!httpResponse) {
+    return next()
+  } else {
+    const { body, statusCode, headers } = httpResponse
+    headers.forEach(([name, value]) => c.header(name, value))
+    c.status(statusCode)
 
-  app.listen(process.env.PORT ? parseInt(process.env.PORT) : 3000, () => {
-    console.log("Server listening on http://localhost:3000")
+    return c.body(body)
+  }
+})
+
+if (isProduction) {
+  console.log(`Server listening on http://localhost:${port}`)
+  serve({
+    fetch: app.fetch,
+    port: port,
   })
 }
+
+export default app

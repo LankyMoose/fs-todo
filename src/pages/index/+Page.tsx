@@ -10,7 +10,7 @@ export function Page({ todos }: Awaited<ReturnType<typeof data>>) {
     if (!text) return
     const res = await fetch("/api/todos", {
       method: "POST",
-      body: JSON.stringify({ text: text.toString() }),
+      body: formData,
     })
 
     if (res.ok) {

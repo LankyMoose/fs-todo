@@ -4,14 +4,13 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "tsx ./src/server.ts",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "set NODE_ENV=production&& tsx ./src/server.ts"
+    "prod": "NODE_ENV=production tsx ./server.ts"
   },
   "keywords": [],
   "author": "",
   "devDependencies": {
-    "@types/express": "^5.0.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "prettier": "^3.4.1",
@@ -20,7 +19,9 @@
     "vite-plugin-kaioken": "0.15.0"
   },
   "dependencies": {
-    "express": "^4.21.1",
+    "@hono/node-server": "^1.13.8",
+    "@hono/vite-dev-server": "^0.19.0",
+    "hono": "^4.7.2",
     "kaioken": "0.35.10",
     "tsx": "^4.19.2",
     "vike": "^0.4.206",
